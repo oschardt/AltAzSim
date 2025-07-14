@@ -39,9 +39,8 @@ class ScanProfile(ABC):
         self._init_alt = None
         self._init_time = None
 
-        self._fin_az = None
-        self._fin_alt = None
-        self._fin_time = None
+        self._alt_az = None
+        self._fin_altaz = None
     
     @abstractmethod
     def copy(self):

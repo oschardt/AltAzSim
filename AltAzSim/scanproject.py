@@ -71,11 +71,11 @@ class ScanProject:
           if True, unit bars are displayed for each coverage map. If False, no unit bar is displayed for every map.
         """
         project_string = (f"{self.project_name}:\n"
-                          f"Total Coverage: {self.coverage_map.get_coverage() * 100:.2f}\n")
+                          f"Total Coverage: {self.coverage_map.get_coverage() * 100:.2f}%\n")
         
         for i, sess in enumerate(self.sessions):
             start = sess.start_time
-            end = sess._scans[-1]._fin_time.to_datetime(timezone=sess.start_time.tzinfo)
+            end = sess._scans[-1]._fin_altaz.obstime.to_datetime(timezone=sess.start_time.tzinfo)
 
             session_string = (
                 f"\tSession {i + 1}:\n"

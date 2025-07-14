@@ -47,6 +47,9 @@ class ScanSession():
         self._init_alt: np.floating = init_alt.to_value(u.deg)
         self._init_az: np.floating = init_az.to_value(u.deg)
 
+        frame = AltAz(obstime=Time(self.start_time), location=self.telescope.location)
+        self.init_altaz = SkyCoord(az = init_az, alt= init_alt, frame= frame)
+
         # initialized on run_scans()
         self.coverage_map: CoverageMap = None
         self.sky_coverage = None
@@ -112,9 +115,10 @@ class ScanSession():
         for i, scan in enumerate(self._scans):
             scan: ScanProfile
 
-            scan._init_az = cur_az.copy()
-            scan._init_alt = cur_alt.copy()
-            scan._init_time = cur_time.copy()
+            altaz_frame = AltAz(obstime=cur_time, location=self.telescope.location)
+            scan._init_alt = cur_alt
+            scan._init_az = cur_az
+            scan._init_time = cur_time
             scan._scan_was_ran = True
             scan._coverage_map = CoverageMap()
             scan._tel = self.telescope
@@ -152,9 +156,8 @@ class ScanSession():
             cur_time = obstimes[-1].copy()
 
             # set final conditions for the scan
-            scan._fin_az = cur_az.copy()
-            scan._fin_alt = cur_alt.copy()
-            scan._fin_time = cur_time.copy()
+            altaz_frame = AltAz(obstime=cur_time, location=self.telescope.location)
+            scan._fin_altaz = SkyCoord(alt= alt[-1] * u.deg, az= az[-1] * u.deg, frame=altaz_frame)
 
 
         # set title for full coverage map
@@ -165,6 +168,7 @@ class ScanSession():
         
         self.coverage_map.title = title
         self.sky_coverage = self.coverage_map.get_coverage()
+        self.fin_altaz = self._scans[-1]._fin_altaz.copy()
 
 
     def display_maps(self, threshold: int | None = None, overlays: None | Overlay | list[Overlay] = None, show_titles: bool = True, show_unit_bars: bool = True):
@@ -220,7 +224,7 @@ class ScanSession():
             scan_string = (
                 f"\tScan {i + 1}:\n"
                 f"\t\tStart time: {scan._init_time.to_datetime(timezone=self.start_time.tzinfo).strftime("%Y-%m-%d %I:%M:%S %p %Z")}\n"
-                f"\t\tEnd time: {scan._fin_time.to_datetime(timezone=self.start_time.tzinfo).strftime("%Y-%m-%d %I:%M:%S %p %Z")}\n"
+                f"\t\tEnd time: {scan._fin_altaz.obstime.to_datetime(timezone=self.start_time.tzinfo).strftime("%Y-%m-%d %I:%M:%S %p %Z")}\n"
                 f"\t\tNumber of scans: {scan._count}\n"
                 f"\t\tDuration of scan: {format_seconds(scan._duration)}\n"
                 f"\t\tSky covered: {scan._fract_covered * 100:.2f}%\n\n"
